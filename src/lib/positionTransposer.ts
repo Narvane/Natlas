@@ -15,20 +15,14 @@ export type CellBounds = {
     height: number
 }
 
-export type MatrixNodeData = {
-    label: string
-    matrixCol: number
-    matrixRow: number
-}
-
-export class TransposeMatrix {
+export class PositionTransposer {
     constructor(
         private colsWidth: number[],
         private rowsHeight: number[],
         private origin: CanvasPosition = { x: 0, y: 0 },
     ) {}
 
-    transposedPosition(col: number, row: number): CanvasPosition {
+    getOriginalPosition(col: number, row: number): CanvasPosition {
         return {
             x: this.origin.x
                 + this.columnOffset(col)
@@ -40,7 +34,7 @@ export class TransposeMatrix {
         }
     }
 
-    originalPosition(x: number, y: number): MatrixPosition {
+    getTransposedPosition(x: number, y: number): MatrixPosition {
         const relativeX = x - this.origin.x
         const relativeY = y - this.origin.y
 
@@ -50,13 +44,27 @@ export class TransposeMatrix {
         }
     }
 
-    cellBounds(col: number, row: number): CellBounds {
+    transposedBounds(col: number, row: number): CellBounds {
         return {
             x: this.origin.x + this.columnOffset(col),
             y: this.origin.y + this.rowOffset(row),
             width: this.colsWidth[col - 1],
             height: this.rowsHeight[row - 1],
         }
+    }
+
+    get width(): number {
+        return this.colsWidth.reduce(
+            (total, width) => total + width,
+            0,
+        )
+    }
+
+    get height(): number {
+        return this.rowsHeight.reduce(
+            (total, height) => total + height,
+            0,
+        )
     }
 
     private columnOffset(col: number): number {
