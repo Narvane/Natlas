@@ -27,7 +27,7 @@ export class NodeMatrix {
     private readonly transposer: PositionTransposer
 
     constructor(
-        private readonly nodes: Node<MatrixNodeData>[],
+        public readonly nodes: Node<MatrixNodeData>[],
         private readonly size: MatrixSize,
         origin: CanvasPosition = { x: 0, y: 0 },
     ) {
