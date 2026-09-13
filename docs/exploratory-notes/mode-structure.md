@@ -6,7 +6,7 @@ Natlas will be structured around the idea that a story is fundamentally a **narr
 
 The backend will be responsible for representing and persisting the **meaning and structure of the story**, while the frontend will be responsible for determining **how that structure is spatially organized and visually rendered**.
 
-This separation prevents visual concerns, such as matrix coordinates or React Flow positions, from becoming part of the core narrative model.
+This separation prevents visual concerns, such as matrix positions or React Flow coordinates, from becoming part of the core narrative model.
 
 ---
 
@@ -18,10 +18,12 @@ The main concepts are:
 
 ```text
 Story
- ├── Branch
+ ├── Line
  │    └── Node
+ │         ├── StoryNode
+ │         └── GapNode
  │
- ├── NodeRelation
+ ├── Relation
  │
  └── Alignment
 ```
@@ -30,25 +32,57 @@ Story
 
 Represents the story as a whole.
 
-A Story contains multiple Branches and their associated narrative elements.
+A Story contains its Lines, Relations, and Alignments.
 
-### Branch
+### Line
 
 Represents a narrative path or timeline within the story.
 
-A Branch contains Nodes.
+A Line contains Nodes.
+
+A Line does not represent a visual row or spatial position. It is a narrative concept that identifies a sequence or perspective within the story.
 
 ### Node
 
-Represents a unit of narrative content.
+Represents a point within a Line.
 
-A Node belongs to a Branch and can have relationships with other Nodes.
+Nodes are the fundamental elements used to represent the progression of the story.
 
-Nodes should not contain nested child objects to represent the entire narrative structure. Relationships between Nodes should instead be represented explicitly.
+The Node hierarchy is:
 
-### NodeRelation
+```text
+Node
+├── StoryNode
+└── GapNode
+```
 
-Represents a relationship between two Nodes.
+### StoryNode
+
+Represents an actual narrative element.
+
+For example, a StoryNode may represent a scene, event, or other meaningful point in the story.
+
+A StoryNode contains narrative information such as its title.
+
+### GapNode
+
+Represents an intentional interval within a Line.
+
+Unlike a StoryNode, a GapNode does not represent narrative content. Its purpose is to represent a gap in the narrative progression.
+
+A GapNode has a size:
+
+```text
+SHORT
+MEDIUM
+LONG
+```
+
+The size represents the relative length of the gap within Natlas' spatial model.
+
+### Relation
+
+Represents an explicit relationship between two Nodes.
 
 For example:
 
@@ -56,26 +90,50 @@ For example:
 Node A → Node B
 ```
 
-The relationship may have a type that defines its meaning, such as:
+A Relation connects a source Node to a target Node and has a type that defines its meaning.
+
+Current relation types are:
 
 ```text
 NEXT
-BRANCH
-CONSEQUENCE
-DEPENDENCY
+LINE
 ```
 
-The exact set of relationship types may evolve as the Natlas narrative model develops.
+The set of relation types may evolve as the narrative model develops.
 
-The important principle is that relationships are represented as explicit domain data rather than being hidden inside nested objects.
+The important principle is that relationships between Nodes are represented explicitly rather than being hidden inside nested child objects.
 
 ---
 
-# 2. Alignment
+# 2. Forks
 
-An Alignment will be represented as its own domain entity.
+A fork is a **structural concept**, not a separate domain entity.
 
-An Alignment represents Nodes that share a narrative alignment.
+A fork occurs when a Node has multiple outgoing `BRANCH` Relations.
+
+For example:
+
+```text
+                 ┌── BRANCH ──> Node B
+                 │
+Node A ──────────┤
+                 │
+                 └── BRANCH ──> Node C
+```
+
+There is therefore no need for a `Fork` class in the domain model.
+
+The fork is simply the structure that emerges from the Relations between Nodes.
+
+This keeps the model focused on the fundamental elements that actually need to be persisted.
+
+---
+
+# 3. Alignment
+
+An Alignment is a first-class domain entity.
+
+An Alignment represents Nodes that share the same narrative alignment.
 
 For example:
 
@@ -86,20 +144,32 @@ Alignment
  └── Node C1
 ```
 
-The model should not represent this through mutual references such as:
+The Nodes may belong to different Lines while still participating in the same Alignment.
+
+The relationship is therefore represented by the Alignment itself rather than through mutual references between Nodes.
+
+Instead of:
 
 ```text
 A2 → B3
 B3 → A2
 ```
 
-Instead, the Alignment itself represents the relationship between those Nodes.
+the model represents:
+
+```text
+Alignment X
+ ├── A2
+ └── B3
+```
 
 This allows an Alignment to contain two or more Nodes without creating circular references between Node objects.
 
+Alignment is therefore part of the narrative model, even though its information will later be used by the frontend to determine spatial positioning.
+
 ---
 
-# 3. The Backend Represents the Narrative Graph
+# 4. The Backend Represents the Narrative Graph
 
 The persisted domain model should be understood as a **narrative graph**.
 
@@ -115,7 +185,7 @@ Conceptually:
          Node
 ```
 
-The relationships are stored explicitly.
+The connections between Nodes are represented explicitly through Relations.
 
 Therefore, the backend should not depend on a deeply nested tree structure such as:
 
@@ -126,7 +196,7 @@ Node
            └── children
 ```
 
-Instead, the graph is composed of independent entities and explicit relationships:
+Instead, the graph is composed of independent domain concepts:
 
 ```text
 Nodes
@@ -134,11 +204,11 @@ Relations
 Alignments
 ```
 
-This allows the backend to work directly with the graph model rather than having to transform a hierarchical structure into a graph later.
+This allows the backend to work directly with the graph model rather than having to transform a hierarchical tree into a graph later.
 
 ---
 
-# 4. Frontend: Spatial Model
+# 5. Frontend: Spatial Model
 
 The organization of Nodes within the visual matrix will be handled by the frontend.
 
@@ -149,15 +219,21 @@ x = 500
 y = 300
 ```
 
-Nor will the matrix position necessarily be persisted as part of the narrative domain.
+Nor will matrix positions necessarily be persisted as part of the narrative domain.
 
-The backend describes **what exists and how the elements are related**.
+The backend describes:
 
-The frontend determines **how those elements should be organized visually**.
+> **What exists and how the elements are related.**
+
+The frontend determines:
+
+> **How those elements should be organized spatially.**
+
+This distinction is important because the same narrative model may potentially be represented using different spatial arrangements or visualizations.
 
 ---
 
-# 5. Matrix and Spatial Positioning
+# 6. Matrix and Spatial Positioning
 
 The frontend will be responsible for concepts related to spatial organization, such as:
 
@@ -169,12 +245,14 @@ Column
 Filler
 ```
 
-Based on the Nodes, Branches, and Alignments received from the backend, the frontend will construct the matrix required for visualization.
+These concepts belong to the spatial representation rather than the narrative domain.
+
+Based on the Nodes, Lines, and Alignments received from the backend, the frontend will construct the matrix required for visualization.
 
 For example:
 
 ```text
-              Branch A    Branch B    Branch C
+              Line A      Line B      Line C
 
 Position 1       A1          B1
 
@@ -183,13 +261,15 @@ Position 2       A2          B2          C1
 Position 3       A3
 ```
 
-In this example, `A2`, `B2`, and `C1` may share an Alignment in the narrative model.
+In this example, `A2`, `B2`, and `C1` may belong to the same Alignment in the narrative model.
 
-The frontend uses that information to place them within the same spatial position of the matrix.
+The frontend uses that information to determine that those Nodes should occupy the same spatial position within the matrix.
+
+The actual matrix position is therefore a consequence of the narrative model and the frontend's positioning rules, rather than information that needs to be stored by the backend.
 
 ---
 
-# 6. PositionTransposer
+# 7. PositionTransposer
 
 The `PositionTransposer` will be responsible for transforming the narrative model received from the backend into the spatial representation used by the frontend.
 
@@ -199,7 +279,7 @@ Conceptually:
 Backend
    │
    ├── Nodes
-   ├── Branches
+   ├── Lines
    ├── Relations
    └── Alignments
           │
@@ -207,19 +287,21 @@ Backend
    PositionTransposer
           │
           ↓
-      MatrixGrid
+       Matrix
           │
           ↓
-      React Flow
+    React Flow
 ```
 
 The `PositionTransposer` determines where each Node should be placed within the matrix according to Natlas' spatial rules.
 
-Those matrix positions can then be translated into the actual coordinates required by React Flow.
+The resulting matrix positions can then be translated into the actual coordinates required by React Flow.
+
+The `PositionTransposer` therefore belongs to the frontend and acts as the boundary between the **narrative representation** and the **spatial representation**.
 
 ---
 
-# 7. Separation of Domain and Presentation
+# 8. Separation of Domain and Presentation
 
 The architecture will follow three conceptual levels.
 
@@ -229,27 +311,31 @@ Represents the meaning and structure of the story.
 
 ```text
 Story
-Branch
+Line
 Node
-NodeRelation
+├── StoryNode
+└── GapNode
+Relation
 Alignment
 ```
 
 ## Spatial Model
 
-Represents how the story is organized spatially.
+Represents how the narrative structure is organized spatially.
 
 ```text
 Matrix
 MatrixPosition
-Filler
 Row
 Column
+Filler
 ```
 
 ## Rendering Model
 
-Represents how the interface renders the spatial model.
+Represents how the spatial model is rendered by the interface.
+
+For React Flow, this includes concepts such as:
 
 ```text
 React Flow Node
@@ -267,7 +353,7 @@ The frontend will be responsible for the **Spatial Model** and the **Rendering M
 
 ---
 
-# 8. Core Principle
+# 9. Core Principle
 
 The main architectural principle is:
 
@@ -297,47 +383,69 @@ And:
 
 is a rendering decision and belongs to React Flow/the frontend.
 
+The three statements describe different levels of the system and should not be mixed.
+
 ---
 
-# 9. API Representation
+# 10. API Representation
 
-The backend can expose a normalized representation of the narrative graph:
+The backend API should expose the information necessary for the frontend to reconstruct the narrative model.
+
+Conceptually, the representation may contain:
 
 ```json
 {
   "story": {},
-  "branches": [],
-  "nodes": [],
+  "lines": [],
   "relations": [],
   "alignments": []
 }
 ```
 
-The frontend receives this model and builds its spatial representation from it.
+The exact API representation does not need to mirror the internal domain classes exactly.
 
-The API therefore remains close to the backend domain model without requiring the backend to know anything about the specific visual implementation.
+What matters is that the API provides the narrative information required by the frontend, without introducing spatial or rendering concerns into the backend.
+
+The frontend can then construct its own spatial representation from that information.
 
 ---
 
-# 10. Benefits
+# 11. Benefits
 
 This approach provides several benefits:
 
-* The persisted model already represents a graph.
+* The persisted model represents a graph rather than an artificial hierarchy.
 * Relationships between Nodes are explicit.
-* Alignments do not require circular references.
+* Forks emerge naturally from `BRANCH` Relations without requiring a separate entity.
+* Alignments are first-class domain entities.
+* Alignments do not require circular references between Nodes.
 * The backend remains independent from the visual implementation.
 * The frontend can change its positioning rules without changing the narrative model.
 * The matrix can evolve independently from the database model.
 * React Flow remains a rendering layer rather than becoming part of the domain model.
-* Different visualizations can be created from the same narrative model.
-* The API can maintain a structure close to the actual domain without introducing unnecessary transformations.
+* Different visualizations can potentially be created from the same narrative model.
+* Spatial concerns such as coordinates and fillers do not pollute the narrative domain.
+* The backend can evolve according to narrative requirements rather than the constraints of a particular frontend library.
 
-## Architectural Decision
+---
 
-Natlas will use a **graph-oriented narrative domain model in the backend**, with Nodes, Branches, Relations, and Alignments represented explicitly and persisted independently.
+# Architectural Decision
 
-**Alignments will be first-class domain entities**, allowing multiple Nodes to participate in the same alignment without creating circular object references.
+Natlas will use a **graph-oriented narrative domain model in the backend**, with Lines, Nodes, Relations, and Alignments represented explicitly.
+
+The Node hierarchy is:
+
+```text
+Node
+├── StoryNode
+└── GapNode
+```
+
+Relations connect Nodes explicitly, with their type defining the meaning of the connection.
+
+A narrative fork is not represented as a separate entity. It emerges from multiple `BRANCH` Relations originating from the same Node.
+
+**Alignments will be first-class domain entities**, allowing multiple Nodes — potentially from different Lines — to participate in the same alignment without creating circular references between Node objects.
 
 The **matrix and spatial positioning will be handled by the frontend**, calculated from the narrative information received from the backend.
 

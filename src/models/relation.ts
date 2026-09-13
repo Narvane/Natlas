@@ -13,6 +13,5 @@ export class Relation {
 
 enum RelationType {
     NEXT = "NEXT",
-    BRANCH = "BRANCH",
-    CONSEQUENCE = "CONSEQUENCE",
+    LINE = "LINE",
 }

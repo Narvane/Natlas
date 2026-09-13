@@ -28,13 +28,13 @@ When structural information is embedded throughout notes and text, these changes
 
 # A Spatial Representation of the Story
 
-To address these problems, the system represents the story through multiple **aligned dimensions**.
+To address these problems, Natlas represents the story through multiple **aligned lines**.
 
 Instead of representing the story only as a linear sequence of text, the writer can define independent lines describing different aspects of its progression.
 
 For example:
 
-```
+```text
 Story
 Beginning ─────────── Middle ─────────── End
 
@@ -44,15 +44,23 @@ Crisis ───── Pre-ascent ───── Ascent ───── Decline
 Time
 Short ───────────── Medium ───────────── Long
 
-Text
+Main Text
 ─────────────── Scene A ───── Scene B ─────────
 ```
 
+Each Line represents a different dimension of the story.
+
+A Line contains Nodes that represent specific points within that dimension. Different Lines can therefore describe different aspects of the same story while sharing a common spatial progression.
+
 The exact dimensions are defined by the writer. They can represent any aspect of the story that is useful to them.
 
-Because these dimensions share the same spatial progression, their relationships can be understood through their position and alignment. A point in the story can therefore have context across several dimensions simultaneously.
+Because these Lines share the same spatial progression, their relationships can be understood through their position and alignment.
 
-The actual text exists as another layer within this structure, connected to the relevant regions of the story.
+A point in the story can therefore have context across several dimensions simultaneously.
+
+The **Main Text Line** represents the actual textual progression of the story. Its nodes contain the pieces of writing associated with the corresponding positions in the overall structure.
+
+Other Lines can describe or organize aspects of the story without containing the actual prose.
 
 This turns the story's structure into something that can be **seen, navigated, and maintained**, rather than something that must exist entirely in the writer's memory.
 
@@ -72,11 +80,11 @@ When information is represented spatially, relationships can be perceived withou
 
 Humans naturally understand spatial progression as a representation of sequence and time. We commonly interpret positions from left to right as progression, and distance as separation between events or stages.
 
-By aligning multiple dimensions along the same progression, the system allows the writer to perceive several relationships simultaneously.
+By aligning multiple Lines along the same progression, the system allows the writer to perceive several relationships simultaneously.
 
 For example:
 
-```
+```text
 Story
 Beginning ───────────── Middle ───────────── End
                                       │
@@ -86,7 +94,7 @@ Crisis ───── Pre-ascent ───── Ascent ───── Decline
 Time
 Short ───────────── Medium ───────────── Long
                                       │
-Text
+Main Text
 ──────────────────────────── Scene X ───────
 ```
 
@@ -106,13 +114,13 @@ A long story contains a large number of relationships that compete for the write
 
 Without an external representation, the writer must constantly switch between:
 
-- remembering what has already happened;
-- remembering what is supposed to happen;
-- understanding the current structural position;
-- considering character development;
-- maintaining pacing;
-- remembering unresolved elements;
-- deciding how much detail a section deserves.
+* remembering what has already happened;
+* remembering what is supposed to happen;
+* understanding the current structural position;
+* considering character development;
+* maintaining pacing;
+* remembering unresolved elements;
+* deciding how much detail a section deserves.
 
 The more information that must be held simultaneously, the easier it becomes to lose something.
 
@@ -146,13 +154,29 @@ As the story changes, these descriptions can become outdated.
 
 The system instead treats structural information as a **separate layer**.
 
-A concept such as "Ascent" is defined once. Text and other elements reference its position rather than repeatedly describing it.
+A concept such as "Ascent" is defined once. Nodes and other elements occupy positions within the structure rather than repeatedly describing that position inside the prose.
 
 This creates a single source of truth for structural information.
 
 If the writer later decides that the momentum model is no longer useful, they can change or remove that structural layer without having to search through the entire story for every place where that concept was mentioned.
 
-The same principle applies when moving or reorganizing sections. Because relationships are represented structurally rather than duplicated inside the prose, changes can propagate through the model instead of requiring manual synchronization.
+The same principle applies to relationships between story elements.
+
+For example, a narrative fork can be represented through **Relations between Nodes** rather than by duplicating information about the fork throughout the story.
+
+A node can have multiple `BRANCH` relations leading to different nodes:
+
+```text
+                 ┌───> Node B
+                 │
+Node A ──────────┤
+                 │
+                 └───> Node C
+```
+
+The branching structure is therefore represented directly by the model.
+
+This makes structural changes easier to manage because the relationship itself is maintained as part of the story model rather than being repeatedly described elsewhere.
 
 This makes the story more **maintainable as it evolves**.
 
